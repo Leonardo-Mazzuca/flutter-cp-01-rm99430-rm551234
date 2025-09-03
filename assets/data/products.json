@@ -1,0 +1,5 @@
+[
+ {"id": 1, "nome" :"Whey", "imagem" : "../images/whey.png", "descricao" : "...", "preco": 129},
+ {"id": 2, "nome" :"Arnold 3d", "imagem" : "../images/pre-treino.png", "descricao" : "...", "preco": 89},
+ {"id": 3, "nome" :"Beta-alanina", "imagem" : "../images/beta-alanina.png", "descricao" : "...", "preco": 99}
+]
