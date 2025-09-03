@@ -19,7 +19,10 @@ class AppRoutes {
       case home:
         return MaterialPageRoute(builder: (_) => ProductListScreen());
       case details:
-        return MaterialPageRoute(builder: (_) => ProductDetailScreen());
+        final args = settings.arguments as ProductScreenDetailArguments;
+        return MaterialPageRoute(
+          builder: (_) => ProductDetailScreen(product: args.product),
+        );
       default:
         return MaterialPageRoute(
           builder: (_) =>
@@ -27,6 +30,11 @@ class AppRoutes {
         );
     }
   }
+}
+
+class ProductScreenDetailArguments {
+  final Product product;
+  ProductScreenDetailArguments(this.product);
 }
 
 // ---------------------------
@@ -141,42 +149,85 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
   void _openDetails(Product product) async {
     await _saveLastViewed(product);
+    setState(() {
+      lastViewed = product;
+    });
     if (!mounted) return;
-    Navigator.pushNamed(context, AppRoutes.details);
+    Navigator.pushNamed(
+      context,
+      AppRoutes.details,
+      arguments: ProductScreenDetailArguments(product),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
-        children: [
-          Text("Produto visto recentemente"),
-          LastViewedCard(
-            product: lastViewed,
-            onTap: () async {
-              _openDetails(lastViewed!);
-            },
-          ),
-          SizedBox(height: 10),
-          Text("Lista de produtos"),
-          SizedBox(height: 10),
-          Expanded(
-            child: ListView.builder(
-              itemCount: products.length,
-              itemBuilder: (ctx, index) {
-                final p = products[index];
-                ProductCard(
-                  product: p,
-                  onTap: () async {
-                    _openDetails(p);
-                  },
-                );
+      body: Padding(
+        padding: EdgeInsetsGeometry.all(10),
+        child: Column(
+          children: [
+            SizedBox(height: 10),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Row(
+                children: const [
+                  Icon(Icons.history, size: 18, color: Colors.black54),
+                  SizedBox(width: 6),
+                  Text(
+                    "Último item visto",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                ],
+              ),
+            ),
+            LastViewedCard(
+              product: lastViewed,
+              onTap: () async {
+                _openDetails(lastViewed!);
               },
             ),
-          ),
-        ],
+            SizedBox(height: 10),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Row(
+                children: const [
+                  Icon(
+                    Icons.local_fire_department,
+                    size: 18,
+                    color: Colors.red,
+                  ),
+                  SizedBox(width: 6),
+                  Text(
+                    "Em alta",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 10),
+            Expanded(
+              child: ListView.builder(
+                itemCount: products.length,
+                itemBuilder: (ctx, index) {
+                  final p = products[index];
+                  return ProductCard(
+                    product: p,
+                    onTap: () async {
+                      _openDetails(p);
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
-      appBar: AppBar(title: Text("Produtos")),
+      appBar: AppBar(
+        title: Text("Produtos"),
+        backgroundColor: Colors.grey,
+        centerTitle: true,
+      ),
     );
   }
 }
@@ -193,11 +244,34 @@ class LastViewedCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (product == null) {
-      return SizedBox.shrink(
-        child: Text("Nenhum produto!"),
-      );
+      return SizedBox.shrink(child: Text("Nenhum produto!"));
     }
-    return ProductCard(product: product!, onTap: onTap);
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      elevation: 2,
+      child: ListTile(
+        contentPadding: const EdgeInsets.all(12),
+        leading: ClipRRect(
+          borderRadius: BorderRadius.circular(6),
+          child: Image.asset(
+            product!.imagem,
+            width: 60,
+            height: 60,
+            fit: BoxFit.cover,
+          ),
+        ),
+        title: Text(
+          product!.nome,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+        subtitle: Text(
+          product!.descricao,
+          style: const TextStyle(fontSize: 14, color: Colors.black54),
+        ),
+        onTap: onTap,
+      ),
+    );
   }
 }
 
@@ -212,11 +286,57 @@ class ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      title: Text(product.nome),
-      subtitle: Text(product.descricao),
-      leading: Image.asset(product.imagem),
-      onTap: onTap,
+    return Card(
+      elevation: 3,
+      margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.asset(
+                  product.imagem,
+                  width: 60,
+                  height: 60,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      product.nome,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      product.descricao,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[700],
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -225,11 +345,64 @@ class ProductCard extends StatelessWidget {
 // TELA DE DETALHES
 // ---------------------------
 class ProductDetailScreen extends StatelessWidget {
-  const ProductDetailScreen({super.key});
+  final Product product;
+
+  const ProductDetailScreen({super.key, required this.product});
 
   @override
   Widget build(BuildContext context) {
-    // TODO: recuperar produto via ModalRoute e exibir detalhes (imagem, nome, estrelas, descrição e preços)
-    return Container();
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          product.nome,
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Image.asset(
+                  product.imagem,
+                  height: 180,
+                  fit: BoxFit.contain,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                product.nome,
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.deepPurple,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                "R\$ ${product.preco.toStringAsFixed(2)}",
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.green,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                product.descricao,
+                style: const TextStyle(fontSize: 16, color: Colors.black87),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
